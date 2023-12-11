@@ -8,6 +8,8 @@ Sample request:
 For this position:
 ![Example position](example.png)
 
+![Example position](example2.png)
+
 Response:
 ```
 {
