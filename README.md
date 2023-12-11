@@ -6,8 +6,6 @@ Sample request:
 `http://127.0.0.1:5000/analyze?depth=20&fen=r1bq1b1r/pppnpkpp/8/3n4/3P4/8/PPP2PPP/RNBQKB1R%20w%20KQ%20-%200%201`
 
 For this position:
-![Example position](example.png)
-
 ![Example position](example2.png)
 
 Response:
