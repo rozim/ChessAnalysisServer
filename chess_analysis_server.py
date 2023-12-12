@@ -1,6 +1,6 @@
 from atexit import register
 from concurrent.futures import ThreadPoolExecutor
-from flask import Flask, jsonify, request, make_response, abort
+import functools
 import json
 import os
 import signal
@@ -9,11 +9,16 @@ from threading import Timer
 import time
 import sqlitedict
 
+from absl import app as absl_app
+from absl import flags
+
 import chess
 import chess.engine
 from chess import WHITE, BLACK
-from absl import app as absl_app
-from absl import flags
+
+from flask import Flask, jsonify, request, make_response, abort
+
+
 
 flask_app = Flask(__name__)
 
@@ -38,7 +43,8 @@ flags.DEFINE_integer('workers', 4, '')
 flags.DEFINE_string('cache_file', 'data/cache.db', '')
 flags.DEFINE_string('engine', 'stockfish', '')
 
-flags.DEFINE_string('host', '127.0.0.1' 'Host to listen on, or 0.0.0.0 for all interfaces')
+flags.DEFINE_string('host', '127.0.0.1',
+                    'Host to listen on, or 0.0.0.0 for all interfaces')
 flags.DEFINE_integer('port', 5050, '')
 
 
@@ -60,9 +66,15 @@ class ChessEnginePool:
     self.pool = ThreadPoolExecutor(max_workers=max_workers)
     self.lock = threading.Lock()
     self.active_engines = set()
+    self.update_last_active()
+
+  def update_last_active(self):
+    self.last_active = time.time()
 
   def get_engine(self):
+    self.update_last_active()
     with self.lock:
+      self.update_last_active()
       if not self.active_engines:
         engine = chess.engine.SimpleEngine.popen_uci(FLAGS.engine)
         engine.configure({'Hash': HASH})
@@ -74,9 +86,9 @@ class ChessEnginePool:
       return engine
 
   def put_engine(self, engine):
+    self.update_last_active()
     with self.lock:
       self.active_engines.add(engine)
-
 
   def close(self):
     # avoid 'RuntimeError: Set changed size during iteration'
@@ -234,6 +246,9 @@ def tick():
       cache_commits += 1
 
 
+# def shutdown_inactive_engines(engine_pool):
+#   Timer(10, functools.partial(shutdown_inactive_engines, engine_pool))
+
 
 def main(argv):
   global engine_pool, cache
@@ -248,6 +263,8 @@ def main(argv):
                           decode=json.loads)
 
   Timer(60, tick).start()
+  ##### Timer(10, functools.partial(shutdown_inactive_engines, engine_pool))
+
   register(shutdown_server)
   signal.signal(signal.SIGTERM, signal_handler)
 
