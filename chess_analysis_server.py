@@ -60,7 +60,7 @@ class ChessEnginePool:
   def get_engine(self):
     with self.lock:
       if not self.active_engines:
-        engine = chess.engine.SimpleEngine.popen_uci('stockfish')
+        engine = chess.engine.SimpleEngine.popen_uci('./stockfish')
         engine.configure({'Hash': HASH})
         engine.configure({'Threads': THREADS})
         engine.configure({'UCI_ShowWDL': 'true'})
