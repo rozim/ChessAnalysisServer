@@ -45,7 +45,7 @@ flags.DEFINE_string('engine', 'stockfish', '')
 
 flags.DEFINE_string('host', '127.0.0.1',
                     'Host to listen on, or 0.0.0.0 for all interfaces')
-flags.DEFINE_integer('port', 5050, '')
+flags.DEFINE_integer('port', 5000, '')
 
 
 def shutdown_server():
@@ -77,12 +77,14 @@ class ChessEnginePool:
       self.update_last_active()
       if not self.active_engines:
         engine = chess.engine.SimpleEngine.popen_uci(FLAGS.engine)
+        # engine.ping()
         engine.configure({'Hash': HASH})
         engine.configure({'Threads': THREADS})
         engine.configure({'UCI_ShowWDL': 'true'})
         self.active_engines.add(engine)
       else:
         engine = self.active_engines.pop()
+        # engine.ping()
       return engine
 
   def put_engine(self, engine):
@@ -244,6 +246,7 @@ def tick():
       cache.commit()
       cache_dirty = False
       cache_commits += 1
+  Timer(60, tick).start()
 
 
 # def shutdown_inactive_engines(engine_pool):
@@ -253,8 +256,14 @@ def tick():
 def main(argv):
   global engine_pool, cache
 
+  #import logging
+  #logging.basicConfig(level=logging.DEBUG)
+
   # Make sure engine exists.
-  chess.engine.SimpleEngine.popen_uci(FLAGS.engine).quit()
+  engine = chess.engine.SimpleEngine.popen_uci(FLAGS.engine)
+  engine.ping()
+  engine.quit()
+
   engine_pool = ChessEnginePool(max_workers=FLAGS.workers)
 
   cache = sqlitedict.open(filename=FLAGS.cache_file,
