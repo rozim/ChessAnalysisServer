@@ -12,7 +12,7 @@ import sqlitedict
 import chess
 import chess.engine
 from chess import WHITE, BLACK
-from absl import app
+from absl import app as absl_app
 from absl import flags
 
 flask_app = Flask(__name__)
@@ -36,6 +36,10 @@ engine_pool = None
 FLAGS = flags.FLAGS
 flags.DEFINE_integer('workers', 4, '')
 flags.DEFINE_string('cache_file', 'data/cache.db', '')
+flags.DEFINE_string('engine', 'stockfish', '')
+
+flags.DEFINE_string('host', '127.0.0.1' 'Host to listen on, or 0.0.0.0 for all interfaces')
+flags.DEFINE_integer('port', 5050, '')
 
 
 def shutdown_server():
@@ -60,7 +64,7 @@ class ChessEnginePool:
   def get_engine(self):
     with self.lock:
       if not self.active_engines:
-        engine = chess.engine.SimpleEngine.popen_uci('./stockfish')
+        engine = chess.engine.SimpleEngine.popen_uci(FLAGS.engine)
         engine.configure({'Hash': HASH})
         engine.configure({'Threads': THREADS})
         engine.configure({'UCI_ShowWDL': 'true'})
@@ -233,6 +237,9 @@ def tick():
 
 def main(argv):
   global engine_pool, cache
+
+  # Make sure engine exists.
+  chess.engine.SimpleEngine.popen_uci(FLAGS.engine).quit()
   engine_pool = ChessEnginePool(max_workers=FLAGS.workers)
 
   cache = sqlitedict.open(filename=FLAGS.cache_file,
@@ -244,8 +251,8 @@ def main(argv):
   register(shutdown_server)
   signal.signal(signal.SIGTERM, signal_handler)
 
-  flask_app.run(debug=False)
+  flask_app.run(debug=False, host=FLAGS.host, port=FLAGS.port)
 
 
 if __name__ == "__main__":
-  app.run(main)
+  absl_app.run(main)
