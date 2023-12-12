@@ -22,7 +22,6 @@ COMMIT_FREQ = 60
 HASH = 256
 THREADS = 1 # reproducible
 
-CACHE_FILE = 'cache.db'
 START = time.time()
 
 global_lock = threading.Lock()
@@ -36,6 +35,7 @@ engine_pool = None
 
 FLAGS = flags.FLAGS
 flags.DEFINE_integer('workers', 4, '')
+flags.DEFINE_string('cache_file', 'data/cache.db', '')
 
 
 def shutdown_server():
@@ -149,7 +149,7 @@ def stats():
                     'cache_win': cache_win,
                     'cache_lose': cache_lose,
                     'cache_num_entries': len(cache),
-                    'cache_bytes': os.stat(CACHE_FILE).st_size,
+                    'cache_bytes': os.stat(FLAGS.cache_file).st_size,
                     'uptime': int(time.time() - START)
                     })
 
@@ -235,7 +235,7 @@ def main(argv):
   global engine_pool, cache
   engine_pool = ChessEnginePool(max_workers=FLAGS.workers)
 
-  cache = sqlitedict.open(filename=CACHE_FILE,
+  cache = sqlitedict.open(filename=FLAGS.cache_file,
                           flag='c',
                           encode=json.dumps,
                           decode=json.loads)
