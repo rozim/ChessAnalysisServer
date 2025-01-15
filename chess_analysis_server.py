@@ -253,6 +253,8 @@ def tick():
 def main(argv):
     global engine_pool, cache
 
+    assert os.path.exists(FLAGS.engine), FLAGS.engine
+
     # import logging
     # logging.basicConfig(level=logging.DEBUG)
 
