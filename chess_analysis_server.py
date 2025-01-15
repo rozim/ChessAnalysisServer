@@ -253,15 +253,16 @@ def tick():
 def main(argv):
     global engine_pool, cache
 
+    # Make sure engine exists.    
     assert os.path.exists(FLAGS.engine), FLAGS.engine
-
-    # import logging
-    # logging.basicConfig(level=logging.DEBUG)
-
-    # Make sure engine exists.
+    # Make sure engine comes up.
     engine = chess.engine.SimpleEngine.popen_uci(FLAGS.engine)
+    print(f'Engine: {engine.id["name"]}')
     engine.ping()
     engine.quit()
+    
+    # import logging
+    # logging.basicConfig(level=logging.DEBUG)
 
     engine_pool = ChessEnginePool(max_workers=FLAGS.workers)
 
